@@ -1,10 +1,8 @@
 import Gracchi from "node-gracchi-api";
-import Binance from "binance-api-node";
+import Binance, { AvgPriceResult } from "binance-api-node";
 
 const base = "BNB",
   quote = "CBRL";
-
-let basePrice = 1;
 
 const bnb = Binance();
 
@@ -13,17 +11,12 @@ const api = new Gracchi({
   url: "https://cex-api-staging.coinsamba.com",
 });
 
-let orders = [];
-
-const placeOrder = async (side: "ask" | "bid") => {
-  const random = Math.random();
-
+const placeOrder = async (side: "ask" | "bid", price: number) => {
   const res = await api.placeOrder({
     base,
     quote,
-    amount: 10,
-    // @ts-ignore
-    price: (basePrice * 1 + (random * side === "ask" ? 1 : -1)).toFixed(1),
+    amount: 0.1,
+    price,
     side,
   });
 
@@ -32,18 +25,17 @@ const placeOrder = async (side: "ask" | "bid") => {
 
 // place orders with high spread
 setInterval(async () => {
-  const avgPrice = await bnb.avgPrice({
+  const rand = Math.random();
+
+  const avgPrice = (await bnb.avgPrice({
     symbol: "BNBBRL",
-  });
+  })) as AvgPriceResult;
 
-  // @ts-ignore
-  basePrice = avgPrice.price;
-
-  orders.push(await placeOrder("bid"));
-  orders.push(await placeOrder("ask"));
-}, 500);
-
-setInterval(async () => {
-  const orderId = orders.shift();
-  if (orderId) api.cancelOrder({ orderId });
-}, 250);
+  if (rand > 0.5) {
+    await placeOrder("bid", Number(Number(avgPrice.price).toFixed(2)));
+    await placeOrder("ask", Number(Number(avgPrice.price).toFixed(2)));
+  } else {
+    await placeOrder("ask", Number(Number(avgPrice.price).toFixed(2)));
+    await placeOrder("bid", Number(Number(avgPrice.price).toFixed(2)));
+  }
+}, 1000);
