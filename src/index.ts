@@ -23,7 +23,6 @@ const placeOrder = async (side: "ask" | "bid", price: number) => {
   return res.orderId;
 };
 
-// place orders with high spread
 setInterval(async () => {
   const rand = Math.random();
 
@@ -38,4 +37,4 @@ setInterval(async () => {
     await placeOrder("ask", Number(Number(avgPrice.price).toFixed(2)));
     await placeOrder("bid", Number(Number(avgPrice.price).toFixed(2)));
   }
-}, 1000);
+}, 25 * 1000);
